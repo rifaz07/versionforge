@@ -1,3 +1,4 @@
-backend/node_modules/ 
-.versionforge/ 
-.env 
+node_modules/
+backend/node_modules/
+.versionforge/
+.env
