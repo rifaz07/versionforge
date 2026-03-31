@@ -11,6 +11,9 @@ const { pullRepo } = require("./controllers/pull");
 const { revertRepo } = require("./controllers/revert");
 
 yargs(hideBin(process.argv))
+.command("start", "starts a anew server", {}, () => {
+    startServer();
+})
 
 .command("init", "Initialize repository", {}, () => {
     initRepo();
@@ -69,3 +72,8 @@ yargs(hideBin(process.argv))
 .demandCommand(1, "You must provide a command")
 .help()
 .argv;
+
+
+function startServer() {
+    console.log("Starting VersionForge server...");
+}
