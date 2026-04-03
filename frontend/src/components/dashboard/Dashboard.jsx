@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "./dashboard.css";
 import Navbar from "../Navbar";
 import api from "../../api";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const [repositories, setRepositories] = useState([]);
@@ -10,6 +11,8 @@ const Dashboard = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const userId = localStorage.getItem("userId");
@@ -62,7 +65,11 @@ const Dashboard = () => {
             <p className="empty">No repositories found!</p>
           ) : (
             suggestedRepositories.map((repo) => (
-              <div key={repo._id} className="repo-card">
+              <div
+                key={repo._id}
+                className="repo-card"
+                onClick={() => navigate(`/repo/${repo._id}`)}
+              >
                 <h4>{repo.name}</h4>
                 <p>{repo.description}</p>
               </div>
@@ -89,7 +96,11 @@ const Dashboard = () => {
             <p className="empty">No repositories found!</p>
           ) : (
             searchResults.map((repo) => (
-              <div key={repo._id} className="repo-card">
+              <div
+                key={repo._id}
+                className="repo-card"
+                onClick={() => navigate(`/repo/${repo._id}`)}
+              >
                 <h4>{repo.name}</h4>
                 <p>{repo.description}</p>
                 <span className={`badge ${repo.visibility}`}>

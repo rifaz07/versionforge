@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { useNavigate, useRoutes } from "react-router-dom";
 import { useAuth } from "./authContext";
 import CreateRepo from "./components/repo/CreateRepo";
+import RepoDetail from "./components/repo/RepoDetail";
 
 // Pages
 import Dashboard from "./components/dashboard/Dashboard";
@@ -50,8 +51,12 @@ const ProjectRoutes = () => {
       element: <Profile />,
     },
     {
-      path: "/repo/create", 
+      path: "/repo/create",
       element: <CreateRepo />,
+    },
+    {
+      path: "/repo/:id",
+      element: <RepoDetail />,
     },
   ]);
 
