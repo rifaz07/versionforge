@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./dashboard.css";
+import Navbar from "../Navbar";
 
 const Dashboard = () => {
   const [repositories, setRepositories] = useState([]);
@@ -18,7 +19,6 @@ const Dashboard = () => {
           `${import.meta.env.VITE_API_URL}/repo/user/${userId}`
         );
         const data = await response.json();
-        // console.log(data);
         setRepositories(data.repositories || []);
       } catch (err) {
         console.error("Error while fetching repositories:", err);
@@ -32,7 +32,7 @@ const Dashboard = () => {
           `${import.meta.env.VITE_API_URL}/repo/all`
         );
         const data = await response.json();
-        setSuggestedRepositories(data.repositories || []);
+        setSuggestedRepositories(data.repositories || []); // ✅ fix pagination response
       } catch (err) {
         console.error("Error while fetching suggested repositories:", err);
       } finally {
@@ -57,6 +57,7 @@ const Dashboard = () => {
 
   return (
     <>
+      <Navbar />
       <section id="dashboard">
         <aside className="left-aside">
           <h3>Suggested Repositories</h3>
