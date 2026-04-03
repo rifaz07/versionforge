@@ -10,6 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@primer/react": "^38.18.0",
+    "axios": "^1.14.0",
+    "install": "^0.13.0",
+    "npm": "^11.12.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.14.0"
