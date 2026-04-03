@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../../api";
 import "./profile.css";
 import Navbar from "../Navbar";
 import { useAuth } from "../../authContext";
@@ -18,9 +18,7 @@ const Profile = () => {
 
     const fetchUserDetails = async () => {
       try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/userProfile/${userId}`
-        );
+        const response = await api.get(`/userProfile/${userId}`);
         setUserDetails(response.data);
       } catch (err) {
         console.error("Cannot fetch user details:", err);
@@ -29,9 +27,7 @@ const Profile = () => {
 
     const fetchUserRepositories = async () => {
       try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/repo/user/${userId}`
-        );
+        const response = await api.get(`/repo/user/${userId}`);
         setRepositories(response.data.repositories || []);
       } catch (err) {
         console.error("Cannot fetch user repositories:", err);

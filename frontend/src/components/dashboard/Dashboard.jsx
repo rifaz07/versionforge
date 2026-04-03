@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./dashboard.css";
 import Navbar from "../Navbar";
+import api from "../../api";
 
 const Dashboard = () => {
   const [repositories, setRepositories] = useState([]);
@@ -15,11 +16,8 @@ const Dashboard = () => {
 
     const fetchRepositories = async () => {
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/repo/user/${userId}`
-        );
-        const data = await response.json();
-        setRepositories(data.repositories || []);
+        const response = await api.get(`/repo/user/${userId}`);
+        setRepositories(response.data.repositories || []);
       } catch (err) {
         console.error("Error while fetching repositories:", err);
         setError("Failed to fetch your repositories!");
@@ -28,11 +26,8 @@ const Dashboard = () => {
 
     const fetchSuggestedRepositories = async () => {
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/repo/all`
-        );
-        const data = await response.json();
-        setSuggestedRepositories(data.repositories || []);
+        const response = await api.get("/repo/all");
+        setSuggestedRepositories(response.data.repositories || []);
       } catch (err) {
         console.error("Error while fetching suggested repositories:", err);
       } finally {

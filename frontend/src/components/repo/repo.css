@@ -1,0 +1,147 @@
+.repo-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 32px 24px;
+  background-color: #0d1117;
+  min-height: calc(100vh - 65px);
+}
+
+.repo-box {
+  width: 100%;
+  max-width: 760px;
+}
+
+.repo-title {
+  font-size: 20px;
+  font-weight: 400;
+  color: #e6edf3;
+  margin-bottom: 8px;
+}
+
+.repo-subtitle {
+  font-size: 14px;
+  color: #8b949e;
+  margin-bottom: 16px;
+}
+
+.repo-divider {
+  border: none;
+  border-top: 1px solid #30363d;
+  margin: 16px 0;
+}
+
+.repo-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e6edf3;
+}
+
+.required {
+  color: #f85149;
+  margin-left: 4px;
+}
+
+.optional {
+  color: #8b949e;
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+.input {
+  padding: 8px 12px;
+  background-color: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #e6edf3;
+  font-size: 14px;
+  outline: none;
+  width: 100%;
+}
+
+.input:focus {
+  border-color: #58a6ff;
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+}
+
+.visibility-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.visibility-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.visibility-card:hover {
+  border-color: #58a6ff;
+}
+
+.visibility-card.selected {
+  border-color: #58a6ff;
+  background-color: #161b22;
+}
+
+.visibility-icon {
+  font-size: 24px;
+}
+
+.visibility-card h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e6edf3;
+  margin-bottom: 4px;
+}
+
+.visibility-card p {
+  font-size: 12px;
+  color: #8b949e;
+}
+
+.create-btn {
+  padding: 10px 20px;
+  background-color: #238636;
+  border: none;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.create-btn:hover {
+  background-color: #2ea043;
+}
+
+.create-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: #f85149;
+  font-size: 13px;
+  padding: 8px;
+  border: 1px solid #f85149;
+  border-radius: 6px;
+}

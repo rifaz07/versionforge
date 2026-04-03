@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import api from "../../api";
 import { useAuth } from "../../authContext";
 import "./auth.css";
 import logo from "../../assets/github-mark-white.svg";
@@ -25,10 +25,7 @@ const Signup = () => {
 
     try {
       setLoading(true);
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/signup`,
-        { email, password, username }
-      );
+      const res = await api.post("/signup", { email, password, username });
 
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("userId", res.data.userId);
