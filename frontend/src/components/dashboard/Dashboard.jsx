@@ -32,7 +32,7 @@ const Dashboard = () => {
           `${import.meta.env.VITE_API_URL}/repo/all`
         );
         const data = await response.json();
-        setSuggestedRepositories(data.repositories || []); // ✅ fix pagination response
+        setSuggestedRepositories(data.repositories || []);
       } catch (err) {
         console.error("Error while fetching suggested repositories:", err);
       } finally {
