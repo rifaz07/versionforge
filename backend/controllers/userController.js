@@ -1,51 +1,54 @@
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs"); 
-const {MongoClient} = require("mongodb"); 
-// const dotenv = require("dotenv");
-// dotenv.config();
-// const uri = process.env.MONGODB_URI;
-const { ObjectId } = require("mongodb");
-
+const bcrypt = require("bcryptjs");
+const { MongoClient, ObjectId } = require("mongodb");
 
 let client;
 
+// DB Connection 
 async function connectClient() {
   if (!client) {
     const uri = process.env.MONGODB_URI;
-
     if (!uri) {
       throw new Error("MONGODB_URI is not defined in .env");
     }
-
     client = new MongoClient(uri);
     await client.connect();
   }
 }
-// console.log("JWT:", process.env.JWT_SECRET_KEY);
 
+// Helper 
+function getCollection() {
+  return client.db("versionforge").collection("users");
+}
 
+//Signup
 async function signup(req, res) {
-  console.log("FULL BODY:", req.body); 
   const { username, password, email } = req.body;
-  try {
-    await connectClient();
-    const db = client.db("versionforge");
-    const usersCollection = db.collection("users");
 
-    const user = await usersCollection.findOne({ username });
-    if (user) {
-      return res.status(400).json({ message: "User already exists!" });
+  try {
+    // Input validation
+    if (!username || !password || !email) {
+      return res.status(400).json({ message: "All fields are required!" });
     }
-    // console.log("BODY:", req.body);
-    // console.log("PASSWORD:", password);
+
+    await connectClient();
+    const usersCollection = getCollection();
+
+    // Check both username AND email
+    const existingUser = await usersCollection.findOne({
+      $or: [{ username }, { email }],
+    });
+    if (existingUser) {
+      return res.status(400).json({ message: "Username or email already exists!" });
+    }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    // console.log("HASHED PASSWORD:", hashedPassword);
+
     const newUser = {
       username,
+      email: email.toLowerCase(),
       password: hashedPassword,
-      email,
       repositories: [],
       followedUsers: [],
       starRepos: [],
@@ -58,21 +61,28 @@ async function signup(req, res) {
       process.env.JWT_SECRET_KEY,
       { expiresIn: "1h" }
     );
-    res.json({ token, userId: result.insertedId });
+
+    return res.status(201).json({ token, userId: result.insertedId });
   } catch (err) {
-    console.error("Error during signup : ", err.message);
-    res.status(500).send("Server error");
+    console.error("Error during signup:", err.message);
+    return res.status(500).json({ error: "Server error" });
   }
 }
 
+//Login 
 async function login(req, res) {
   const { email, password } = req.body;
-  try {
-    await connectClient();
-    const db = client.db("versionforge");
-    const usersCollection = db.collection("users");
 
-    const user = await usersCollection.findOne({ email });
+  try {
+    // Input validation
+    if (!email || !password) {
+      return res.status(400).json({ message: "All fields are required!" });
+    }
+
+    await connectClient();
+    const usersCollection = getCollection();
+
+    const user = await usersCollection.findOne({ email: email.toLowerCase() });
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials!" });
     }
@@ -82,45 +92,50 @@ async function login(req, res) {
       return res.status(400).json({ message: "Invalid credentials!" });
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET_KEY, {
-      expiresIn: "1h",
-    });
-    res.json({ token, userId: user._id });
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET_KEY,
+      { expiresIn: "1h" }
+    );
+
+    return res.json({ token, userId: user._id });
   } catch (err) {
-    console.error("Error during login : ", err.message);
-    res.status(500).send("Server error!");
+    console.error("Error during login:", err.message);
+    return res.status(500).json({ error: "Server error" });
   }
 }
 
-
+//Get All Users
 async function getAllUsers(req, res) {
   try {
     await connectClient();
-    const db = client.db("versionforge");
-    const usersCollection = db.collection("users");
+    const usersCollection = getCollection();
 
     const users = await usersCollection
       .find({}, { projection: { password: 0 } })
       .toArray();
 
-    res.json(users);
+    return res.json(users);
   } catch (err) {
-    console.error("Error during fetching : ", err.message);
-    res.status(500).send("Server error!");
+    console.error("Error during fetching:", err.message);
+    return res.status(500).json({ error: "Server error" });
   }
 }
 
-
+//Get User Profile
 async function getUserProfile(req, res) {
-  const currentID = req.params.id;
+  const { id } = req.params;
+
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid User ID!" });
+  }
 
   try {
     await connectClient();
-    const db = client.db("versionforge");
-    const usersCollection = db.collection("users");
+    const usersCollection = getCollection();
 
     const user = await usersCollection.findOne(
-      { _id: new  ObjectId(currentID) },
+      { _id: new ObjectId(id) },
       { projection: { password: 0 } }
     );
 
@@ -128,85 +143,86 @@ async function getUserProfile(req, res) {
       return res.status(404).json({ message: "User not found!" });
     }
 
-    res.json(user);
-
+    return res.json(user);
   } catch (err) {
-    console.error("Error during fetching : ", err.message);
-    res.status(500).send("Server error!");
+    console.error("Error during fetching:", err.message);
+    return res.status(500).json({ error: "Server error" });
   }
 }
 
-
-async function  updateUserProfile(req, res) {
-  const currentID = req.params.id;
+//Update User Profile
+async function updateUserProfile(req, res) {
+  const { id } = req.params;
   const { email, password } = req.body;
+
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid User ID!" });
+  }
+
+  if (!email && !password) {
+    return res.status(400).json({ message: "Nothing to update!" });
+  }
 
   try {
     await connectClient();
-    const db = client.db("versionforge");
-    const usersCollection = db.collection("users");
+    const usersCollection = getCollection();
 
-    let updateFields = {};
-
-    if (email) {
-      updateFields.email = email;
-    }
-
+    const updateFields = {};
+    if (email) updateFields.email = email.toLowerCase();
     if (password) {
       const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
-      updateFields.password = hashedPassword;
+      updateFields.password = await bcrypt.hash(password, salt);
     }
 
     const result = await usersCollection.findOneAndUpdate(
-      { _id: new ObjectId(currentID) },
+      { _id: new ObjectId(id) },
       { $set: updateFields },
       { returnDocument: "after", projection: { password: 0 } }
     );
 
-    if (!result.value) {
+    if (!result) {
       return res.status(404).json({ message: "User not found!" });
     }
 
-    res.json(result.value);
-
+    return res.json(result);
   } catch (err) {
-    console.error("Error during updating : ", err.message);
-    res.status(500).send("Server error!");
+    console.error("Error during updating:", err.message);
+    return res.status(500).json({ error: "Server error" });
   }
 }
 
-
-
+//Delete User Profile
 async function deleteUserProfile(req, res) {
-  const currentID = req.params.id;
+  const { id } = req.params;
+
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid User ID!" });
+  }
 
   try {
     await connectClient();
-    const db = client.db("versionforge");
-    const usersCollection = db.collection("users");
+    const usersCollection = getCollection();
 
     const result = await usersCollection.deleteOne({
-      _id: new ObjectId(currentID),
+      _id: new ObjectId(id),
     });
 
     if (result.deletedCount === 0) {
       return res.status(404).json({ message: "User not found!" });
     }
 
-    res.json({ message: "User Profile Deleted!" });
-
+    return res.json({ message: "User Profile Deleted!" });
   } catch (err) {
-    console.error("Error during deleting : ", err.message);
-    res.status(500).send("Server error!");
+    console.error("Error during deleting:", err.message);
+    return res.status(500).json({ error: "Server error" });
   }
 }
+
 module.exports = {
-  getAllUsers,
   signup,
   login,
+  getAllUsers,
   getUserProfile,
   updateUserProfile,
   deleteUserProfile,
 };
-
