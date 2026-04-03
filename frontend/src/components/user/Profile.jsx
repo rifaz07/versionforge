@@ -4,6 +4,7 @@ import axios from "axios";
 import "./profile.css";
 import Navbar from "../Navbar";
 import { useAuth } from "../../authContext";
+import HeatMapProfile from "./HeatMap";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -89,7 +90,10 @@ const Profile = () => {
               </div>
             ))
           )}
+
+          <HeatMapProfile />
         </div>
+
       </div>
     </>
   );
