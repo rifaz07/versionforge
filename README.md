@@ -35,6 +35,25 @@ VersionForge is a full-stack version control system built from scratch. It combi
 
 ---
 
+## 📸 Screenshots
+
+### Sign Up
+![Signup](docs/screenshots/signup.png)
+
+### Sign In
+![Login](docs/screenshots/login.png)
+
+### Dashboard
+![Dashboard](docs/screenshots/dashboard.png)
+
+### Create Repository
+![Create Repo](docs/screenshots/create-repo.png)
+
+### User Profile & Activity Heatmap
+![Profile](docs/screenshots/profile.png)
+
+---
+
 ## ✨ Features
 
 - **User Authentication** — Signup, login with JWT-based auth and bcrypt password hashing
