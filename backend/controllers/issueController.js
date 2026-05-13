@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Issue = require("../models/issueModel");
+const Repository = require("../models/repoModel");
 
 //Helper 
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
@@ -25,6 +26,7 @@ async function createIssue(req, res) {
     });
 
     await issue.save();
+    await Repository.findByIdAndUpdate(id, { $push: { issues: issue._id } });
     return res.status(201).json({ message: "Issue created successfully!", issue });
   } catch (err) {
     console.error("Error during issue creation:", err.message);
