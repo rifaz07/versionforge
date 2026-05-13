@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useNavigate, useRoutes } from "react-router-dom";
+import { useNavigate, useRoutes, useLocation } from "react-router-dom";
 import { useAuth } from "./authContext";
 import CreateRepo from "./components/repo/CreateRepo";
 import RepoDetail from "./components/repo/RepoDetail";
@@ -10,9 +10,12 @@ import Profile from "./components/user/Profile";
 import Login from "./components/auth/Login";
 import Signup from "./components/auth/Signup";
 
+const PUBLIC_PATHS = ["/auth", "/signup"];
+
 const ProjectRoutes = () => {
   const { currentUser, setCurrentUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const userIdFromStorage = localStorage.getItem("userId");
@@ -21,17 +24,14 @@ const ProjectRoutes = () => {
       setCurrentUser(userIdFromStorage);
     }
 
-    if (
-      !userIdFromStorage &&
-      !["/auth", "/signup"].includes(window.location.pathname)
-    ) {
+    if (!userIdFromStorage && !PUBLIC_PATHS.includes(location.pathname)) {
       navigate("/auth");
     }
 
-    if (userIdFromStorage && window.location.pathname === "/auth") {
+    if (userIdFromStorage && location.pathname === "/auth") {
       navigate("/");
     }
-  }, [currentUser, navigate, setCurrentUser]);
+  }, [location.pathname]);
 
   let element = useRoutes([
     {
