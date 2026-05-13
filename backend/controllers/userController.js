@@ -1,43 +1,20 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const { MongoClient, ObjectId } = require("mongodb");
+const mongoose = require("mongoose");
+const User = require("../models/userModel");
 
-let client;
-
-// DB Connection 
-async function connectClient() {
-  if (!client) {
-    const uri = process.env.MONGODB_URI;
-    if (!uri) {
-      throw new Error("MONGODB_URI is not defined in .env");
-    }
-    client = new MongoClient(uri);
-    await client.connect();
-  }
-}
-
-// Helper 
-function getCollection() {
-  return client.db("versionforge").collection("users");
-}
+const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 //Signup
 async function signup(req, res) {
   const { username, password, email } = req.body;
 
   try {
-    // Input validation
     if (!username || !password || !email) {
       return res.status(400).json({ message: "All fields are required!" });
     }
 
-    await connectClient();
-    const usersCollection = getCollection();
-
-    // Check both username AND email
-    const existingUser = await usersCollection.findOne({
-      $or: [{ username }, { email }],
-    });
+    const existingUser = await User.findOne({ $or: [{ username }, { email: email.toLowerCase() }] });
     if (existingUser) {
       return res.status(400).json({ message: "Username or email already exists!" });
     }
@@ -45,44 +22,37 @@ async function signup(req, res) {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const newUser = {
+    const newUser = new User({
       username,
       email: email.toLowerCase(),
       password: hashedPassword,
-      repositories: [],
-      followedUsers: [],
-      starRepos: [],
-    };
+    });
 
-    const result = await usersCollection.insertOne(newUser);
+    const result = await newUser.save();
 
     const token = jwt.sign(
-      { id: result.insertedId },
+      { id: result._id },
       process.env.JWT_SECRET_KEY,
       { expiresIn: "1h" }
     );
 
-    return res.status(201).json({ token, userId: result.insertedId });
+    return res.status(201).json({ token, userId: result._id });
   } catch (err) {
     console.error("Error during signup:", err.message);
     return res.status(500).json({ error: "Server error" });
   }
 }
 
-//Login 
+//Login
 async function login(req, res) {
   const { email, password } = req.body;
 
   try {
-    // Input validation
     if (!email || !password) {
       return res.status(400).json({ message: "All fields are required!" });
     }
 
-    await connectClient();
-    const usersCollection = getCollection();
-
-    const user = await usersCollection.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: email.toLowerCase() }).select("+password");
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials!" });
     }
@@ -108,13 +78,7 @@ async function login(req, res) {
 //Get All Users
 async function getAllUsers(req, res) {
   try {
-    await connectClient();
-    const usersCollection = getCollection();
-
-    const users = await usersCollection
-      .find({}, { projection: { password: 0 } })
-      .toArray();
-
+    const users = await User.find({}).select("-password").lean();
     return res.json(users);
   } catch (err) {
     console.error("Error during fetching:", err.message);
@@ -126,18 +90,12 @@ async function getAllUsers(req, res) {
 async function getUserProfile(req, res) {
   const { id } = req.params;
 
-  if (!ObjectId.isValid(id)) {
+  if (!isValidId(id)) {
     return res.status(400).json({ message: "Invalid User ID!" });
   }
 
   try {
-    await connectClient();
-    const usersCollection = getCollection();
-
-    const user = await usersCollection.findOne(
-      { _id: new ObjectId(id) },
-      { projection: { password: 0 } }
-    );
+    const user = await User.findById(id).select("-password").lean();
 
     if (!user) {
       return res.status(404).json({ message: "User not found!" });
@@ -155,7 +113,7 @@ async function updateUserProfile(req, res) {
   const { id } = req.params;
   const { email, password } = req.body;
 
-  if (!ObjectId.isValid(id)) {
+  if (!isValidId(id)) {
     return res.status(400).json({ message: "Invalid User ID!" });
   }
 
@@ -164,9 +122,6 @@ async function updateUserProfile(req, res) {
   }
 
   try {
-    await connectClient();
-    const usersCollection = getCollection();
-
     const updateFields = {};
     if (email) updateFields.email = email.toLowerCase();
     if (password) {
@@ -174,11 +129,11 @@ async function updateUserProfile(req, res) {
       updateFields.password = await bcrypt.hash(password, salt);
     }
 
-    const result = await usersCollection.findOneAndUpdate(
-      { _id: new ObjectId(id) },
+    const result = await User.findByIdAndUpdate(
+      id,
       { $set: updateFields },
-      { returnDocument: "after", projection: { password: 0 } }
-    );
+      { new: true, runValidators: true }
+    ).select("-password");
 
     if (!result) {
       return res.status(404).json({ message: "User not found!" });
@@ -195,19 +150,14 @@ async function updateUserProfile(req, res) {
 async function deleteUserProfile(req, res) {
   const { id } = req.params;
 
-  if (!ObjectId.isValid(id)) {
+  if (!isValidId(id)) {
     return res.status(400).json({ message: "Invalid User ID!" });
   }
 
   try {
-    await connectClient();
-    const usersCollection = getCollection();
+    const result = await User.findByIdAndDelete(id);
 
-    const result = await usersCollection.deleteOne({
-      _id: new ObjectId(id),
-    });
-
-    if (result.deletedCount === 0) {
+    if (!result) {
       return res.status(404).json({ message: "User not found!" });
     }
 
